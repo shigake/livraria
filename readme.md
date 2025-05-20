@@ -1,6 +1,6 @@
 # 📖 Livraria API
 
-API REST em Java com Spring Boot para gestão de livros, integração com fontes externas (Google Books, Open Library) e aplicação de padrões SOLID e boas práticas de arquitetura.
+API REST em Java com Spring Boot para gestão de livros, integração com fontes externas (Google Books, Open Library) e aplicação de padrões SOLID, Design Patterns e arquitetura limpa.
 
 ---
 
@@ -56,32 +56,33 @@ Os testes serão adicionados na próxima etapa usando JUnit 5 e Mockito.
 
 ### S — Single Responsibility Principle
 
-**`GoogleBookAdapter`**: converte apenas DTO em entidade `Book`. Não faz chamadas nem salva nada.
+**`GoogleBookAdapter`** tem apenas a responsabilidade de converter um `GoogleBooksResponse.Item` em `Book`. Ele não realiza chamadas HTTP nem acessa o banco de dados. Isso facilita testes e manutenção.
 
 ### O — Open/Closed Principle
 
-**`BookSeedServiceImpl`**: permite adicionar novas fontes de livros sem alterar as existentes.
+**`BookSeedServiceImpl`** pode ser extendido para novos provedores de livros (ex: Gutendex) sem alterar as classes existentes, apenas adicionando novas implementações do `BookProviderFacade`.
 
 ### L — Liskov Substitution Principle
 
-**`BookProviderFacade`**: permite substituir `GoogleBooksFacade` por `OpenLibraryFacade` sem quebrar o código.
+Qualquer classe que implemente `BookProviderFacade` (como `GoogleBooksFacade`, `OpenLibraryFacade`) pode ser usada sem quebrar o contrato esperado pelo serviço. Ou seja, `BookSeedServiceImpl` não precisa saber qual implementação está usando.
 
 ### I — Interface Segregation Principle
 
-**`BookSeedService`**: define métodos específicos e pequenos (Google, OpenLibrary), podendo ser implementados separadamente.
+A interface `BookSeedService` separa métodos de seeding de fontes distintas (`seedBooksFromGoogle`, `seedBooksFromOpenLibrary`) permitindo implementações específicas sem forçar métodos desnecessários.
 
 ### D — Dependency Inversion Principle
 
-**`BookSeedServiceImpl`** depende de `facade` (abstração de integração), não do `RestTemplate` ou JSON.
+`BookSeedServiceImpl` depende de `BookProviderFacade`, uma abstração de provedor de livros, em vez de depender diretamente de `GoogleBooksClient` ou `RestTemplate`. Isso facilita a inversão de dependência, testes e extensibilidade.
 
 ---
 
 ## 🧰 Design Patterns aplicados
 
-* **Facade**: `GoogleBooksFacade` e `OpenLibraryFacade` escondem a complexidade da integração externa
-* **Adapter**: `GoogleBookAdapter` e `OpenLibraryAdapter` convertem DTO externo para modelo de domínio
-* **DTO**: `GoogleBooksResponse`, `OpenLibraryResponse` encapsulam os dados de entrada externa
-* **Builder**: utilizado em `Book.builder()` para construção imutável de objetos
+* **Facade**: `GoogleBooksFacade` e `OpenLibraryFacade` encapsulam chamadas HTTP, parsing e conversão de dados em uma interface simples `fetchBooks()`.
+* **Adapter**: `GoogleBookAdapter` e `OpenLibraryAdapter` transformam as estruturas externas (DTOs) em entidades `Book` do domínio.
+* **Factory**: `BookProviderFactory` escolhe dinamicamente qual implementação de `BookProviderFacade` usar com base em um enum `BookProvider`.
+* **DTO**: `GoogleBooksResponse`, `OpenLibraryResponse` modelam as respostas das APIs externas sem acoplar a estrutura ao domínio.
+* **Builder**: uso de `Book.builder()` para criação fluente e imutável dos objetos de domínio.
 
 ---
 
@@ -89,19 +90,19 @@ Os testes serão adicionados na próxima etapa usando JUnit 5 e Mockito.
 
 ### ✍ Encapsulamento
 
-Entidades como `Book` encapsulam seus dados e usam `@Getter/@Setter` via Lombok.
+As entidades de domínio (ex: `Book`) mantém seus atributos privados com acesso controlado por meio de getters/setters, usando `@Getter` e `@Setter` do Lombok.
 
 ### 🔗 Herança
 
-Aplicado indiretamente com record types reutilizando estruturas (ex: `VolumeInfo`, `Doc`).
+Embora o projeto não utilize herança clássica, reuso de estrutura acontece via records aninhados e abstrações como `BookProviderFacade`, que são substituíveis.
 
 ### ✨ Polimorfismo
 
-`BookProviderFacade` permite múltiplas implementações (Google, Open) com o mesmo contrato.
+`BookProviderFacade` permite que várias classes (Google, OpenLibrary) implementem o mesmo contrato. O código do serviço permanece o mesmo, não importando qual implementação está por trás.
 
 ### ⚖️ Abstração
 
-Interfaces como `BookSeedService` e `BookProviderFacade` expõem comportamentos sem expor implementações.
+Interfaces como `BookSeedService` e `BookProviderFacade` escondem os detalhes das implementações concretas e permitem a evolução do sistema sem impacto direto.
 
 ---
 

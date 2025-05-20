@@ -1,6 +1,7 @@
 package com.erick.livraria.external.openlibrary.facade;
 
 import com.erick.livraria.domain.Book;
+import com.erick.livraria.domain.provider.BookProviderFacade;
 import com.erick.livraria.external.openlibrary.adapter.OpenLibraryAdapter;
 import com.erick.livraria.external.openlibrary.client.OpenLibraryClient;
 import com.erick.livraria.external.openlibrary.dto.OpenLibraryResponse;
@@ -11,7 +12,7 @@ import java.util.List;
 
 @Component
 @RequiredArgsConstructor
-public class OpenLibraryFacade {
+public class OpenLibraryFacade implements BookProviderFacade {
 
     private final OpenLibraryClient client;
     private final OpenLibraryAdapter adapter;
